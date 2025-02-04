@@ -1,0 +1,3 @@
+diffusers==0.32.2
+gradio==5.11.0
+transformers==4.48.1
