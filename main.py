@@ -1,36 +1,36 @@
-# pip install --upgrade diffusers transformers scipy gradio
-
 import torch
 from diffusers import StableDiffusionPipeline
 import gradio as gr
 
-#  Load the pre-trained AI Model from Hugging face
-model_id = "CompVis/stable-diffusion-v1-4"
-device = "cuda"
+def load_model(model_id, device):
+    pipe = StableDiffusionPipeline.from_pretrained(model_id, torch_dtype=torch.float16)
+    return pipe.to(device)
 
-pipe = StableDiffusionPipeline.from_pretrained(model_id, torch_dtype=torch.float16)
-pipe = pipe.to(device)
+def generate_image(pipe, text_prompt):
+    return pipe(text_prompt).images[0]
 
-# Generate an image
+def save_image(image, filename):
+    image.save(filename)
 
-prompt = "a photograph of an astronaut riding a horse"
-image = pipe(prompt).images[0]
-image.save("astronaut_rides_horse.png")
+def main():
+    model_id = "CompVis/stable-diffusion-v1-4"
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    
+    pipe = load_model(model_id, device)
+    
+    prompt = "a photograph of an astronaut riding a horse"
+    image = generate_image(pipe, prompt)
+    save_image(image, "astronaut_rides_horse.png")
+    
+    iface = gr.Interface(
+        fn=lambda text_prompt: generate_image(pipe, text_prompt),
+        inputs=gr.Textbox(lines=2, placeholder="Enter your prompt here..."),
+        outputs=gr.Image(type="pil"),
+        title="Stable Diffusion Image Generator",
+        description="Generate images from text prompts using Stable Diffusion."
+    )
+    
+    iface.launch()
 
-
-# A GUI to generate images
-
-
-def generate_image(prompt):
-    image = pipe(prompt).images[0]
-    return image
-
-iface = gr.Interface(
-    fn=generate_image,
-    inputs=gr.Textbox(lines=2, placeholder="Enter your prompt here..."),
-    outputs=gr.Image(type="pil"),
-    title="Stable Diffusion Image Generator",
-    description="Generate images from text prompts using Stable Diffusion."
-)
-
-iface.launch()
+if __name__ == "__main__":
+    main()
